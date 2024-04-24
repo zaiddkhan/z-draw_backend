@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import dotenv from 'dotenv';
+import userRouter from './routes/UserRoutes.js';
 
 dotenv.config();    
 const port = process.env.PORT || 3000;
@@ -7,6 +8,7 @@ const port = process.env.PORT || 3000;
 const app : Application = express();
 
 
+app.use('/v1/user',userRouter)
 
 app.get('/',(req,res) => {
     console.log("app is listeneing")

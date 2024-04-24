@@ -30,9 +30,8 @@ const fields = {
 
   signUpValidator.messagesProvider = signUpMessagesProvider;
 
-  export {
-    signUpValidator
-  }
+  export default signUpValidator
+  
 
    
 
