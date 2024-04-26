@@ -28,6 +28,6 @@
     "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
-    "twilio": "^5.0.4"
+    "resend": "^3.2.0"
   }
 }

@@ -2,11 +2,13 @@ import asyncHandler from 'express-async-handler'
 import  signUpValidator  from './Validation.js'
 import vine, { errors } from "@vinejs/vine";
 import dotenv from 'dotenv'
-import {Twilio} from 'twilio';
+import { Resend } from 'resend';
 
-const twilio = (await import('twilio')).default;
+dotenv.config(); 
 
-const client = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
 
 const signUp = asyncHandler(async (req,res) => {
     const data = req.body;
@@ -22,28 +24,43 @@ const signUp = asyncHandler(async (req,res) => {
 
 
 
-dotenv.config();  
+ 
 
 
 export const sendOtp = asyncHandler(async (req,res) => {
-     const { countryCode,phoneNumber } = req.body;
+    const data = req.body;
      try{
-        const otpResponse = await client.messages.create({
-            from : '555555',
-            to : "9326315040",
-            body : "Sms sent"
-        })
-    
+       await signUpValidator.validate(data);
+       const { email,name } = data;
+        const otp = generateOtp()
+        await resend.emails.send({
+            from: 'onboarding@resend.dev',
+            to: email,
+            subject: `Welcome to z-draw ${name}`,
+            html: `<p>Congrats on getting your otp,here it is ${otp}</p>`
+          });
     
         res.status(200).send(
             'otp sent successfullt'
         )
 
-     }catch(err){
-        res.status(400).send('errororor')
+     }catch(error ){
+        if (error instanceof errors.E_VALIDATION_ERROR) {
+            console.log('validation error')
+            res.status(error.status).send(error.messages);
+          }else{
+        res.status(400).json({
+            'message' : error
+        })
+    }
      }
 
 })
 
+
+function generateOtp(): string {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    return otp.toString();
+}
 
 

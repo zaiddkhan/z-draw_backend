@@ -4,7 +4,6 @@ import vine,{ SimpleMessagesProvider } from "@vinejs/vine";
 const fields = {
     name: "Name",
     email: "Email",
-    password: "Password",
   };
   
   const signUpMessagesProvider = new SimpleMessagesProvider(
@@ -22,7 +21,7 @@ const fields = {
   );
 
  const singUpSchema = vine.object({
-    name: vine.string(),
+    name: vine.string().minLength(5),
     email: vine.string().email()
   });
   const signUpValidator = vine.compile(singUpSchema);
