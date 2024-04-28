@@ -86,6 +86,21 @@ export const verifyOtp = asyncHandler(async (req,res) => {
 }
 });
 
+export const updateProfile = asyncHandler(async (req,res) => {
+    try {
+        const cloudinaryUrls = req.body.cloudinaryUrls;
+        if (cloudinaryUrls.length === 0) {
+            console.error('No Cloudinary URLs found.');
+             res.status(500).send('Internal Server Error');
+        }
+       const images = cloudinaryUrls;
+        res.send(images)
+
+    } catch (error) {
+         res.status(500).json({ error});
+    }
+})
+
 
 function generateOtp(): string {
     const otp = Math.floor(100000 + Math.random() * 900000);

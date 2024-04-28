@@ -6,7 +6,7 @@ dotenv.config();
 const port = process.env.PORT || 3000;
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use('/v1/user', userRouter);
 app.get('/', (req, res) => {
     console.log("app is listeneing");
