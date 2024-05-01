@@ -1,4 +1,4 @@
-import asyncHandler from 'express-async-handler'
+import { asyncHandler } from '../../../helper.js';
 import  signUpValidator  from './Validation.js'
 import { createProfileValidator  } from './Validation.js';
 import vine, { errors } from "@vinejs/vine";
@@ -6,6 +6,7 @@ import dotenv from 'dotenv'
 import { Resend } from 'resend';
 import {OTP} from '../../../models/OtpSchema.js';
 import { USER } from '../../../models/UserSchema.js';
+import { NextFunction, Request, Response } from 'express';
 
 dotenv.config(); 
 
@@ -88,23 +89,24 @@ export const verifyOtp = asyncHandler(async (req,res) => {
 }
 });
 
-export const updateProfile = asyncHandler(async (req,res) => {
+export const updateProfile = (async (req : Request,res : Response,next : NextFunction) => {
     
     try {
         const { nickname,favourite_food,hobby,email } = req.body;
         const existingUser = await USER.findOne ({ email : email });
         if(existingUser != null){
-             res.status(400).json({
+            return res.status(400).json({
                 id: "0",
                 message : "user already exists"
-            })
+            });
+                  
         }
         await createProfileValidator.validate(req.body);
         
         const cloudinaryUrls = req.body.cloudinaryUrls;
         if (cloudinaryUrls.length === 0) {
             console.error('No Cloudinary URLs found.');
-             res.status(500).send('Internal Server Error');
+            return res.status(500).send('Internal Server Error');
         }
         const user = {
             nickname : nickname,
@@ -114,10 +116,11 @@ export const updateProfile = asyncHandler(async (req,res) => {
             email : email
         }
         await USER.create(user);
-        res.send(user)
+        return res.send(user)
 
     } catch (error) {
          res.status(500).json({ error});
+         next(error)
     }
 })
 

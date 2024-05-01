@@ -1,4 +1,4 @@
-import asyncHandler from 'express-async-handler';
+import { asyncHandler } from '../../../helper.js';
 import signUpValidator from './Validation.js';
 import { createProfileValidator } from './Validation.js';
 import { errors } from "@vinejs/vine";
@@ -74,7 +74,7 @@ export const verifyOtp = asyncHandler(async (req, res) => {
         }
     }
 });
-export const updateProfile = asyncHandler(async (req, res) => {
+export const updateProfile = (async (req, res, next) => {
     try {
         const { nickname, favourite_food, hobby, email } = req.body;
         const existingUser = await USER.findOne({ email: email });
@@ -88,7 +88,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
         const cloudinaryUrls = req.body.cloudinaryUrls;
         if (cloudinaryUrls.length === 0) {
             console.error('No Cloudinary URLs found.');
-            res.status(500).send('Internal Server Error');
+            return res.status(500).send('Internal Server Error');
         }
         const user = {
             nickname: nickname,
@@ -98,10 +98,11 @@ export const updateProfile = asyncHandler(async (req, res) => {
             email: email
         };
         await USER.create(user);
-        res.send(user);
+        return res.send(user);
     }
     catch (error) {
         res.status(500).json({ error });
+        next(error);
     }
 });
 function generateOtp() {
