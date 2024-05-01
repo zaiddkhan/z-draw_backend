@@ -79,7 +79,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
         const { nickname, favourite_food, hobby, email } = req.body;
         const existingUser = await USER.findOne({ email: email });
         if (existingUser != null) {
-            res.status(400).json({
+            return res.status(400).json({
                 id: "0",
                 message: "user already exists"
             });
