@@ -1,9 +1,11 @@
 import asyncHandler from 'express-async-handler';
 import signUpValidator from './Validation.js';
+import { createProfileValidator } from './Validation.js';
 import { errors } from "@vinejs/vine";
 import dotenv from 'dotenv';
 import { Resend } from 'resend';
 import { OTP } from '../../../models/OtpSchema.js';
+import { USER } from '../../../models/UserSchema.js';
 dotenv.config();
 const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendOtp = asyncHandler(async (req, res) => {
@@ -74,13 +76,29 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 });
 export const updateProfile = asyncHandler(async (req, res) => {
     try {
+        const { nickname, favourite_food, hobby, email } = req.body;
+        const existingUser = await USER.findOne({ email: email });
+        if (existingUser != null) {
+            res.status(400).json({
+                id: "0",
+                message: "user already exists"
+            });
+        }
+        await createProfileValidator.validate(req.body);
         const cloudinaryUrls = req.body.cloudinaryUrls;
         if (cloudinaryUrls.length === 0) {
             console.error('No Cloudinary URLs found.');
             res.status(500).send('Internal Server Error');
         }
-        const images = cloudinaryUrls;
-        res.send(images);
+        const user = {
+            nickname: nickname,
+            favorite_food: favourite_food,
+            hobby: hobby,
+            profile_image: cloudinaryUrls[0],
+            email: email
+        };
+        await USER.create(user);
+        res.send(user);
     }
     catch (error) {
         res.status(500).json({ error });

@@ -16,6 +16,13 @@ const singUpSchema = vine.object({
     name: vine.string().minLength(5),
     email: vine.string().email()
 });
+const createProfileSchema = vine.object({
+    nickname: vine.string().minLength(1),
+    favourite_food: vine.string().minLength(1),
+    hobby: vine.string().minLength(4),
+    email: vine.string().email()
+});
 const signUpValidator = vine.compile(singUpSchema);
+export const createProfileValidator = vine.compile(createProfileSchema);
 signUpValidator.messagesProvider = signUpMessagesProvider;
 export default signUpValidator;
