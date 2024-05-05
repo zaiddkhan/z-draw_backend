@@ -3,6 +3,8 @@ import { asyncHandler } from '../../helper.js';
 import {generateRandomNum } from '../../helper.js'
 import { roomDataValidator } from './Validation.js';
 import { ROOM } from '../../models/RoomSchema.js';
+import { UpdateWriteOpResult } from 'mongoose';
+import exp from 'constants';
 
 
 
@@ -91,6 +93,70 @@ export const getRoomStatus = asyncHandler(async (req,res,next) => {
             message : 'success'
         })
 
+    }catch(err){
+
+    }
+})
+
+export const joinRoom = asyncHandler(async(req,res) => {
+    try{
+        const room_id : String = req.body.room_id
+        const user_id : String = req.body.user_id
+        if(room_id == '' || room_id == undefined){
+            res.status(500).json({
+                id : '0',
+                message : 'no room id'
+            })
+        }
+        const room = ROOM.findOne({
+            room_id : room_id
+        })
+        if(room == null){
+            res.status(400).json({
+                id : '0',
+                message : 'no room found for the given id'
+            })
+        }else{
+           const result : UpdateWriteOpResult = await ROOM.updateOne({ room_id : room_id },
+            { $addToSet : { joined_by : user_id }} );
+            console.log(result);
+            res.status(200).json({
+                id : '1',
+                message : 'user joined successfully'
+            })
+        }
+    }catch(err){
+
+    }
+})
+
+export const leaveRoom = asyncHandler(async(req,res) => {
+    try{
+        const room_id : String = req.body.room_id
+        const user_id : String = req.body.user_id
+        if(room_id == '' || room_id == undefined){
+            res.status(500).json({
+                id : '0',
+                message : 'no room id'
+            })
+        }
+        const room = ROOM.findOne({
+            room_id : room_id
+        })
+        if(room == null){
+            res.status(400).json({
+                id : '0',
+                message : 'no room found for the given id'
+            })
+        }else{
+           const result : UpdateWriteOpResult = await ROOM.updateOne({ room_id : room_id },
+            { $pull : { joined_by : user_id }} );
+            console.log(result);
+            res.status(200).json({
+                id : '1',
+                message : 'user removed successfully'
+            })
+        }
     }catch(err){
 
     }
