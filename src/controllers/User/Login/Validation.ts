@@ -1,44 +1,21 @@
-import vine,{ SimpleMessagesProvider } from "@vinejs/vine";
+import { z } from 'zod'
 
 
-const fields = {
-    name: "Name",
-    email: "Email",
-  };
-  
-  const signUpMessagesProvider = new SimpleMessagesProvider(
-    {
-      // Applicable for all fields
-      required: "The {{ field }} field is required",
-      string: "The value of {{ field }} field must be a string",
-      email: "The value is not a valid email address",
-  
-      // Error message for the custom fields
-      "name.required": "Please enter name",
-      "email.required": "Please enter email"
-    },
-    fields
-  );
+export const signUpSchema = z.object({
+    name: z.string().min(5).refine(val => val.trim().length >= 5, {
+        message: "Please enter name"
+    }),
+    email: z.string().email("The value is not a valid email address")
+});
 
- const singUpSchema = vine.object({
-    name: vine.string().minLength(5),
-    email: vine.string().email()
-  });
+export const createProfileSchema = z.object({
+    nickname: z.string().min(1),
+    favourite_food: z.string().min(1),
+    hobby: z.string().min(4),
+    email: z.string().email("The value is not a valid email address")
+});
 
-  const createProfileSchema = vine.object({
-    nickname : vine.string().minLength(1),
-    favourite_food : vine.string().minLength(1),
-    hobby : vine.string().minLength(4),
-    email : vine.string().email()
-  })
-  const signUpValidator = vine.compile(singUpSchema);
-
-  export const createProfileValidator = vine.compile(createProfileSchema);
-
-
-  signUpValidator.messagesProvider = signUpMessagesProvider;
-
-  export default signUpValidator
+ 
   
 
    

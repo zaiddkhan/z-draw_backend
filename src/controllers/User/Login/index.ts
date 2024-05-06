@@ -1,6 +1,5 @@
 import { asyncHandler } from '../../../helper.js';
-import  signUpValidator  from './Validation.js'
-import { createProfileValidator  } from './Validation.js';
+import { createProfileSchema,signUpSchema  } from './Validation.js';
 import vine, { errors } from "@vinejs/vine";
 import dotenv from 'dotenv'
 import { Resend } from 'resend';
@@ -17,7 +16,7 @@ export const sendOtp = asyncHandler(async (req,res) => {
     const data = req.body;
      try{
     
-       await signUpValidator.validate(data);
+       await signUpSchema.parse(data);
        const { email,name } = data;
         const otp = generateOtp()
         const otpPayload = { email, otp };
@@ -101,7 +100,7 @@ export const updateProfile = (async (req : Request,res : Response,next : NextFun
             });
                   
         }
-        await createProfileValidator.validate(req.body);
+        await createProfileSchema.parse(req.body);
         
         const cloudinaryUrls = req.body.cloudinaryUrls;
         if (cloudinaryUrls.length === 0) {

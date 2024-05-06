@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { asyncHandler } from '../../helper.js';
 import {generateRandomNum } from '../../helper.js'
-import { roomDataValidator } from './Validation.js';
+import { roomDataSchema } from './Validation.js';
 import { ROOM } from '../../models/RoomSchema.js';
 import { UpdateWriteOpResult } from 'mongoose';
 import exp from 'constants';
@@ -11,7 +11,7 @@ import exp from 'constants';
 export const createRoom = (async(req : Request,res : Response,next :NextFunction) => {
     try{
         const data = req.body;
-        await roomDataValidator.validate(data);
+        await roomDataSchema.parse(data);
         
         const roomId = generateRandomNum();
         const expiryTime = Date.now() + 120*1000
