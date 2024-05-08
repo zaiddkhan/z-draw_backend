@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import { NextFunction, Request, Response } from 'express';
 dotenv.config();
 import { imageValidator } from './helper.js';
-import { createProfileValidator } from './Validation.js';
+import { createProfileSchema } from './Validation.js';
 import { USER } from '../../../models/UserSchema.js';
 
 cloudinary.config({

@@ -1,6 +1,5 @@
 import { asyncHandler } from '../../../helper.js';
-import signUpValidator from './Validation.js';
-import { createProfileValidator } from './Validation.js';
+import { createProfileSchema, signUpSchema } from './Validation.js';
 import { errors } from "@vinejs/vine";
 import dotenv from 'dotenv';
 import { Resend } from 'resend';
@@ -11,7 +10,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendOtp = asyncHandler(async (req, res) => {
     const data = req.body;
     try {
-        await signUpValidator.validate(data);
+        await signUpSchema.parse(data);
         const { email, name } = data;
         const otp = generateOtp();
         const otpPayload = { email, otp };
@@ -84,7 +83,7 @@ export const updateProfile = (async (req, res, next) => {
                 message: "user already exists"
             });
         }
-        await createProfileValidator.validate(req.body);
+        await createProfileSchema.parse(req.body);
         const cloudinaryUrls = req.body.cloudinaryUrls;
         if (cloudinaryUrls.length === 0) {
             console.error('No Cloudinary URLs found.');

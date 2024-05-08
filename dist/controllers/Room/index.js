@@ -1,11 +1,11 @@
 import { asyncHandler } from '../../helper.js';
 import { generateRandomNum } from '../../helper.js';
-import { roomDataValidator } from './Validation.js';
+import { roomDataSchema } from './Validation.js';
 import { ROOM } from '../../models/RoomSchema.js';
 export const createRoom = (async (req, res, next) => {
     try {
         const data = req.body;
-        await roomDataValidator.validate(data);
+        await roomDataSchema.parse(data);
         const roomId = generateRandomNum();
         const expiryTime = Date.now() + 120 * 1000;
         const room = {

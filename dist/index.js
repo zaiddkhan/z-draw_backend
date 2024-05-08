@@ -4,7 +4,8 @@ import userRouter from './routes/UserRoutes.js';
 import connectDB from './config/dbconfig.js';
 import bodyParser from 'body-parser';
 import roomRouter from './routes/RoomRoutes.js';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
+import messageHandler from './controllers/Game/messageHandler.js';
 dotenv.config();
 const port = process.env.PORT || 3000;
 const app = express();
@@ -31,11 +32,15 @@ const wss = new WebSocketServer({ server: httpServer });
 wss.on('connection', function connection(ws) {
     ws.on('error', console.error);
     ws.on('message', function message(data, isBinary) {
-        wss.clients.forEach(function each(client) {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(data, { binary: isBinary });
+        console.log(data.toString());
+        console.log(JSON.parse(data.toString()).payload);
+        if (data) {
+            try {
+                messageHandler(ws, JSON.parse(data.toString()));
             }
-        });
+            catch (e) {
+            }
+        }
     });
     ws.send('Hello! Message From Server!!');
 });
