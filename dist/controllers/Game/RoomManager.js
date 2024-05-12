@@ -1,27 +1,38 @@
 import generateRandomWord from "./index.js";
+import { GAME } from "../../models/GameSchema.js";
 export class RoomManager {
     constructor() {
         this.rooms = new Map();
     }
-    addUser(name, userId, roomId, connection) {
+    async addUser(name, userId, roomId, connection, totalChances) {
         const randomGuessWord = generateRandomWord();
         if (!this.rooms.get(roomId)) {
             this.rooms.set(roomId, {
                 users: [],
-                word: randomGuessWord
+                word: randomGuessWord,
+                totalChances: totalChances
             });
         }
-        console.log(randomGuessWord);
         this.rooms.get(roomId)?.users.push({
             id: userId,
             name,
             connection
         });
+        const gameObject = {
+            userId: userId,
+            roomId: roomId,
+            currentChance: 1,
+            totalChances: totalChances,
+            points: 0,
+            guessWord: JSON.stringify(randomGuessWord)
+        };
+        await GAME.create(gameObject);
+        connection.send(JSON.stringify(gameObject));
         connection.on('close', (reasonCode, desc) => {
             //remove
         });
     }
-    broadcast(userId, roomId, outgoingCoords) {
+    broadcastCoordinates(userId, roomId, outgoingCoords) {
         const room = this.rooms.get(roomId);
         if (room == null) {
             return;

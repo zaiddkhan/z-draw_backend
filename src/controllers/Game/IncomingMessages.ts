@@ -27,6 +27,7 @@ export const InitMessage = z.object({
     name: z.string(),
     userId: z.string(), 
     roomId: z.string(),
+    totalChances : z.number()
 })
 
 export type InitMessageType = z.infer<typeof InitMessage>;

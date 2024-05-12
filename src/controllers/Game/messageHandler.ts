@@ -9,7 +9,7 @@ function messageHandler(ws : WebSocket,message : IncomingMessage){
     if(message.type == SupportedMessage.JoinRoom){
         const payload = message.payload;
         
-        roomManager.addUser(payload.name,payload.userId,payload.roomId,ws)
+        roomManager.addUser(payload.name,payload.userId,payload.roomId,ws,payload.totalChances)
     }else if(message.type == SupportedMessage.CoOrdPlot){
 
         const payload = message.payload;
@@ -26,7 +26,7 @@ function messageHandler(ws : WebSocket,message : IncomingMessage){
 
 
 
-        roomManager.broadcast(payload.userId,payload.roomId,outgoingCoords)
+        roomManager.broadcastCoordinates(payload.userId,payload.roomId,outgoingCoords)
     
     }
 }

@@ -1,6 +1,7 @@
 import { WebSocket } from "ws";
 import { OutgoingMessage } from "./outgoingMessages.js";
 import generateRandomWord, { OutgoingGuessWord } from "./index.js";
+import { GAME } from "../../models/GameSchema.js";
 
 interface User{
     name : String,
@@ -10,7 +11,8 @@ interface User{
 
 interface Room {
     users : User[],
-    word : OutgoingGuessWord
+    word : OutgoingGuessWord,
+    totalChances : number
 }
 
 export class RoomManager{
@@ -19,7 +21,7 @@ export class RoomManager{
         this.rooms = new Map<string,Room>()
     }
 
-    addUser(name : string,userId : string,roomId : string,connection : WebSocket){
+    async addUser(name : string,userId : string,roomId : string,connection : WebSocket,totalChances : number){
 
        
         const randomGuessWord = generateRandomWord()
@@ -27,15 +29,29 @@ export class RoomManager{
         if(!this.rooms.get(roomId)){
             this.rooms.set(roomId,{
                 users : [],
-                word : randomGuessWord
+                word : randomGuessWord,
+                totalChances : totalChances
             })
         }
-        console.log(randomGuessWord)
+       
         this.rooms.get(roomId)?.users.push({
             id : userId,
             name,
             connection
         });
+
+        const gameObject = {
+            userId : userId,
+            roomId : roomId,
+            currentChance : 1,
+            totalChances : totalChances,
+            points : 0,
+            guessWord : JSON.stringify(randomGuessWord)
+        }
+        await GAME.create(gameObject)
+        
+        
+        connection.send(JSON.stringify(gameObject))
         
         
         connection.on('close',(reasonCode,desc) => {
@@ -43,7 +59,7 @@ export class RoomManager{
         })
     }
 
-    broadcast(userId : string,roomId : string,outgoingCoords : OutgoingMessage){
+    broadcastCoordinates(userId : string,roomId : string,outgoingCoords : OutgoingMessage){
         const room = this.rooms.get(roomId)
         if(room == null){
             return
@@ -54,7 +70,7 @@ export class RoomManager{
            }
            console.log("outgoing message " + JSON.stringify(outgoingCoords))
 
-            connection.send(JSON.stringify(outgoingCoords))
+        connection.send(JSON.stringify(outgoingCoords))
         })
 
     }

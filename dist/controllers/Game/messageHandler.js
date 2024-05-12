@@ -5,7 +5,7 @@ const roomManager = new RoomManager();
 function messageHandler(ws, message) {
     if (message.type == SupportedMessage.JoinRoom) {
         const payload = message.payload;
-        roomManager.addUser(payload.name, payload.userId, payload.roomId, ws);
+        roomManager.addUser(payload.name, payload.userId, payload.roomId, ws, payload.totalChances);
     }
     else if (message.type == SupportedMessage.CoOrdPlot) {
         const payload = message.payload;
@@ -18,7 +18,7 @@ function messageHandler(ws, message) {
                 userId: payload.userId
             }
         };
-        roomManager.broadcast(payload.userId, payload.roomId, outgoingCoords);
+        roomManager.broadcastCoordinates(payload.userId, payload.roomId, outgoingCoords);
     }
 }
 export default messageHandler;
