@@ -4,7 +4,8 @@ import { z} from 'zod';
 
 export enum SupportedMessage {
     JoinRoom =  "JOIN_ROOM",
-    CoOrdPlot = "CO-ORD_PLOT"
+    CoOrdPlot = "CO-ORD_PLOT",
+    WordGuess = "WORD_GUESS"
 }
 
 export type IncomingMessage = {
@@ -13,7 +14,19 @@ export type IncomingMessage = {
 } | {
     type: SupportedMessage.CoOrdPlot,
     payload: CoordPlotMessageType
+} | {
+    type : SupportedMessage.WordGuess,
+    payload : GuessWordMessageType
 }
+
+export const GuessWordMessage = z.object({
+    guessedWord : z.string(),
+    currentWord : z.string(),
+    userId : z.string(),
+    roomId : z.string()
+})
+
+export type GuessWordMessageType = z.infer<typeof GuessWordMessage>
 
 export const CoordPlotMessage = z.object({
     x : z.number(),

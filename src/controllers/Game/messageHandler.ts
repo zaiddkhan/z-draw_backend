@@ -28,6 +28,9 @@ function messageHandler(ws : WebSocket,message : IncomingMessage){
 
         roomManager.broadcastCoordinates(payload.userId,payload.roomId,outgoingCoords)
     
+    }else if(message.type == SupportedMessage.WordGuess){
+        const payload = message.payload
+        roomManager.guessWords(payload.userId,payload.roomId,payload.guessedWord,payload.currentWord)
     }
 }
 

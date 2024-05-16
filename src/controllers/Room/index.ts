@@ -23,7 +23,9 @@ export const createRoom = (async(req : Request,res : Response,next :NextFunction
             room_name : data.room_name,
             host_id : data.host_id,
             joined_by : [data.host_id],
-            expiry_time : expiryTime
+            expiry_time : expiryTime,
+            rounds : data.rounds
+    
         }
         const result = await ROOM.create(room)
         

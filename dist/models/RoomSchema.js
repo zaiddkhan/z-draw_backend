@@ -23,6 +23,10 @@ const roomSchema = new Schema({
     },
     expiry_time: {
         type: Number
+    },
+    rounds: {
+        type: Number,
+        default: 5
     }
 });
 export const ROOM = model("ROOM", roomSchema);

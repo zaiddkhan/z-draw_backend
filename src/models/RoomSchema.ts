@@ -7,7 +7,8 @@ interface Room{
     roomName : String,
     host_id : String,
     joined_by : Array<String>,
-    expiry_time : number
+    expiry_time : number,
+    rounds : number
 }
 
 const roomSchema = new Schema<Room>({
@@ -34,6 +35,10 @@ const roomSchema = new Schema<Room>({
      },
      expiry_time : {
         type : Number
+     },
+     rounds : {
+        type : Number,
+        default : 5
      }
  });
 
