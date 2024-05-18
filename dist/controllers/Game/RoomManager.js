@@ -1,3 +1,4 @@
+import { SupportedOutgoingMessage } from "./outgoingMessages.js";
 import { findSimilarity } from "./helper.js";
 import { generateRandomWord } from "./helper.js";
 import { GAME } from "../../models/GameSchema.js";
@@ -27,10 +28,16 @@ export class RoomManager {
             "currentRound": nextUser.currentRound + 1
         };
         const updatedRound = nextUser.currentRound + 1;
-        console.log(room.users[userIndex]);
+        const guessWordResponse = {
+            type: SupportedOutgoingMessage.GUESS_RESULT,
+            payload: {
+                similarity: similarity,
+                currentRound: updatedRound,
+                isEnded: false
+            }
+        };
         nextUser.connection.send(JSON.stringify({
-            updatedRound,
-            similarity
+            guessWordResponse
         }));
     }
     async addUser(name, userId, roomId, connection, totalChances) {
@@ -69,7 +76,6 @@ export class RoomManager {
             if (id == userId) {
                 return;
             }
-            console.log("outgoing message " + JSON.stringify(outgoingCoords));
             connection.send(JSON.stringify(outgoingCoords));
         });
     }
