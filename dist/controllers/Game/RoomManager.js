@@ -18,27 +18,45 @@ export class RoomManager {
                 minCurrentRound = user.currentRound;
             }
         }
-        const nextUser = room.users.find(user => user.currentRound === minCurrentRound);
-        if (nextUser == null) {
-            return;
-        }
-        const userIndex = room.users.findIndex(user => user === nextUser);
-        room.users[userIndex] = {
-            ...room.users[userIndex],
-            "currentRound": nextUser.currentRound + 1
-        };
-        const updatedRound = nextUser.currentRound + 1;
-        const guessWordResponse = {
-            type: SupportedOutgoingMessage.GUESS_RESULT,
-            payload: {
-                similarity: similarity,
-                currentRound: updatedRound,
-                isEnded: false
+        if (similarity === 100) {
+            let maxCurrentRound = room.users[0].currentRound;
+            for (let user of room.users) {
+                if (user.currentRound > maxCurrentRound) {
+                    maxCurrentRound = user.currentRound;
+                }
             }
-        };
-        nextUser.connection.send(JSON.stringify({
-            guessWordResponse
-        }));
+            for (let i = 0; i < room.users.length; i++) {
+                room.users[i] = {
+                    ...room.users[i],
+                    "currentRound": maxCurrentRound + 1
+                };
+            }
+            const randomGuessWord = generateRandomWord();
+            const correctGuessResponse = {
+                type: SupportedOutgoingMessage.GUESS_RESULT,
+                payload: {
+                    word: randomGuessWord.word,
+                    similarity: similarity,
+                    currentRound: maxCurrentRound + 1,
+                    isEnded: false
+                }
+            };
+            room.users.forEach(({ name, id, connection }) => { connection.send(JSON.stringify(correctGuessResponse)); });
+        }
+        else {
+            const guessWordResponse = {
+                type: SupportedOutgoingMessage.GUESS_RESULT,
+                payload: {
+                    word: currentWord,
+                    similarity: similarity,
+                    currentRound: room.users[0].currentRound,
+                    isEnded: false
+                }
+            };
+            room.users.forEach(({ name, id, connection }) => {
+                connection.send(JSON.stringify(guessWordResponse));
+            });
+        }
     }
     async addUser(name, userId, roomId, connection, totalChances) {
         const randomGuessWord = generateRandomWord();

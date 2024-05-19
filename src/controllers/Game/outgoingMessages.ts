@@ -16,7 +16,8 @@ type OutgoingCoords = {
 type OutgoingWordGuessResult = {
     similarity : number,
     currentRound : number,
-    isEnded : boolean
+    isEnded : boolean,
+    word : string,
 }
 
 export type OutgoingMessage  = {
