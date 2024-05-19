@@ -33,19 +33,31 @@ export class RoomManager{
             return
         }
         const similarity = findSimilarity(guessedWord,currentWord)
-        let minCurrentRound = room.users[0].currentRound;
+        const game = await GAME.findOne().sort({ currentRound: 1 }).exec();
+
+        let minCurrentRound: number;
+        if (game !== null) {
+        minCurrentRound = game.currentRound;
+        } else {
+        minCurrentRound = 1;
+        }
+
         for (let user of room.users) {
             if (user.currentRound < minCurrentRound) {
                 minCurrentRound = user.currentRound;
             }
         }
         if(similarity === 100){
-            let maxCurrentRound = room.users[0].currentRound;
-            for (let user of room.users) {
-                if (user.currentRound > maxCurrentRound) {
-                    maxCurrentRound = user.currentRound;
-                }
+            const maxCurrentRoundGame = await GAME.findOne().sort({ currentRound: -1 }).exec();
+
+            let maxCurrentRound: number;
+            if (maxCurrentRoundGame !== null) {
+                maxCurrentRound = maxCurrentRoundGame.currentRound;
+            } else {
+                maxCurrentRound = 1;
             }
+    
+        
             for(let i = 0;i < room.users.length ;i++ ){
             
                 room.users[i] ={ 
@@ -53,7 +65,18 @@ export class RoomManager{
                     "currentRound" : maxCurrentRound+1
                 }
             }
-           
+            const game = await GAME.findOne({ 
+                "roomId" : roomId
+            });
+            if(game == null){
+                return
+            }
+            const currentUserPoints =game.points.get(userId) || 0;
+            game.points.set(userId, currentUserPoints + 10);
+            await game.save();
+
+
+            console.log("saved the points")
              const randomGuessWord = generateRandomWord()
              const correctGuessResponse : OutgoingMessage = {
                     type : SupportedOutgoingMessage.GUESS_RESULT,
@@ -63,8 +86,14 @@ export class RoomManager{
                         currentRound : maxCurrentRound+1,
                         isEnded : false
                     }
-                }
-                room.users.forEach(({name,id,connection}) => {  connection.send(JSON.stringify(correctGuessResponse))   })
+              }
+
+              
+            console.log(room.users.length)
+             room.users.forEach(({name,id,connection}) => {  
+                console.log("inside the for loop")
+                connection.send(JSON.stringify(correctGuessResponse))
+           })
             
 
         }else{
@@ -83,6 +112,7 @@ export class RoomManager{
         room.users.forEach(({name,id,connection}) => {
             connection.send(JSON.stringify(guessWordResponse))
         })
+    
     }
         
     
@@ -94,58 +124,52 @@ export class RoomManager{
 
        
         const randomGuessWord = generateRandomWord()
-        
-        if(!this.rooms.get(roomId)){
+        const game  = await GAME.findOne({
+            roomId : roomId
+        })
+    
+        if(game === null){
             this.rooms.set(roomId,{
                 users : [],
                 word : randomGuessWord,
             })
             const gameObject = {
-                userId : userId,
                 roomId : roomId,
-                points : JSON.stringify({
-                    userId : 0
-                }),
+                points : {
+                    [userId] : 0
+                },
                 guessWord : JSON.stringify(randomGuessWord),
-                totalChances : totalChances
+                totalRounds : totalChances,
+                currentRound : 1,
+                players : [userId]
             }
             await GAME.create(gameObject)
             connection.send(JSON.stringify(gameObject))
 
         }else{
 
-            const game = GAME.findOne({
-                "roomId" : roomId 
-            })
-            if(game == null){
+        
+            if(game === null){
                 return;
             }
-            GAME.updateOne({"roomId" : roomId,},
-             {  $set : { userId : "0" } },
-             (err: Error, res: any) => {
-                if (err) {
-                  console.log(err);
-                } else {
-                  console.log('Document updated:', res);
-                }
-              })
-       
-        this.rooms.get(roomId)?.users.push({
-            id : userId,
-            name : name,
-            connection :connection,
-            currentRound : 1
-        });   
-
+             game.players.push(userId)
+             game.points.set(userId ,0 )
+             await game.save()
         
-        connection.send(JSON.stringify(game))
+             connection.send(JSON.stringify(game))
+
+
+        }
+            
+    
+        
         
         
         connection.on('close',(reasonCode,desc) => {
             //remove
         })
     }
-    }
+    
     
 
     broadcastCoordinates(userId : string,roomId : string,outgoingCoords : OutgoingMessage){
