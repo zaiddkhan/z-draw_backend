@@ -12,6 +12,8 @@ interface User{
     currentRound : number
 }
 
+
+
 interface Room {
     users : User[],
     word : OutgoingGuessWord
@@ -98,31 +100,51 @@ export class RoomManager{
                 users : [],
                 word : randomGuessWord,
             })
-        }
+            const gameObject = {
+                userId : userId,
+                roomId : roomId,
+                points : JSON.stringify({
+                    userId : 0
+                }),
+                guessWord : JSON.stringify(randomGuessWord),
+                totalChances : totalChances
+            }
+            await GAME.create(gameObject)
+            connection.send(JSON.stringify(gameObject))
+
+        }else{
+
+            const game = GAME.findOne({
+                "roomId" : roomId 
+            })
+            if(game == null){
+                return;
+            }
+            GAME.updateOne({"roomId" : roomId,},
+             {  $set : { userId : "0" } },
+             (err: Error, res: any) => {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log('Document updated:', res);
+                }
+              })
        
         this.rooms.get(roomId)?.users.push({
             id : userId,
             name : name,
             connection :connection,
             currentRound : 1
-        });
+        });   
 
-        const gameObject = {
-            userId : userId,
-            roomId : roomId,
-            points : 0,
-            guessWord : JSON.stringify(randomGuessWord),
-            totalChances : totalChances
-        }
-        await GAME.create(gameObject)
         
-        
-        connection.send(JSON.stringify(gameObject))
+        connection.send(JSON.stringify(game))
         
         
         connection.on('close',(reasonCode,desc) => {
             //remove
         })
+    }
     }
     
 
