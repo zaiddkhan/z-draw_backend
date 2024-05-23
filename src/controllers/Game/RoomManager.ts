@@ -76,7 +76,6 @@ export class RoomManager{
             await game.save();
 
 
-            console.log("saved the points")
              const randomGuessWord = generateRandomWord()
              const correctGuessResponse : OutgoingMessage = {
                     type : SupportedOutgoingMessage.GUESS_RESULT,
@@ -123,40 +122,36 @@ export class RoomManager{
     async addUser(name : string,userId : string,roomId : string,connection : WebSocket,totalChances : number){
 
        
-        const randomGuessWord = generateRandomWord()
         const game  = await GAME.findOne({
             roomId : roomId
         })
     
         if(game === null){
-            this.rooms.set(roomId,{
-                users : [],
-                word : randomGuessWord,
-            })
-            const gameObject = {
-                roomId : roomId,
-                points : {
-                    [userId] : 0
-                },
-                guessWord : JSON.stringify(randomGuessWord),
-                totalRounds : totalChances,
-                currentRound : 1,
-                players : [userId]
-            }
-            await GAME.create(gameObject)
-            connection.send(JSON.stringify(gameObject))
-
+            return
         }else{
 
         
             if(game === null){
                 return;
             }
+
              game.players.push(userId)
              game.points.set(userId ,0 )
+           
+             if(game.players.length == game.maxPlayers){
+                game.currentPaintr = userId
+                connection.send(JSON.stringify({
+                    currentPlayer : userId,
+                    playerAdded : true
+                }))
+             }
              await game.save()
+             
         
-             connection.send(JSON.stringify(game))
+             connection.send(JSON.stringify({
+                currentPlayer : '',
+                playerAdded : true
+            }))
 
 
         }

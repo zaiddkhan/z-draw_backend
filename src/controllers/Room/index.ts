@@ -5,6 +5,7 @@ import { roomDataSchema } from './Validation.js';
 import { ROOM } from '../../models/RoomSchema.js';
 import { UpdateWriteOpResult } from 'mongoose';
 import exp from 'constants';
+import { GAME } from '../../models/GameSchema.js';
 
 
 
@@ -16,21 +17,24 @@ export const createRoom = (async(req : Request,res : Response,next :NextFunction
         const roomId = generateRandomNum();
         const expiryTime = Date.now() + 120*1000
 
-        const room =  {
-            room_id : roomId,
-            max_players : data.max_players,
-            start_time : Date.now(),
-            room_name : data.room_name,
-            host_id : data.host_id,
-            joined_by : [data.host_id],
-            expiry_time : expiryTime,
-            rounds : data.rounds
-    
+        const randomGuessWord = generateRandomNum()
+
+        const gameObject = {
+            roomId : roomId,
+            points : {
+                [data.host_id] : 0
+            },
+            guessWord : JSON.stringify(randomGuessWord),
+            totalRounds : data.totalChances,
+            currentRound : 1,
+            players : [data.host_id],
+            expiryTime : expiryTime,
+            maxPlayers : data.maxPlayers
         }
-        const result = await ROOM.create(room)
+        await GAME.create(gameObject)
         
         return res.status(200).json(
-            room
+            gameObject
         )
 
 
@@ -95,38 +99,6 @@ export const getRoomStatus = asyncHandler(async (req,res,next) => {
             message : 'success'
         })
 
-    }catch(err){
-
-    }
-})
-
-export const joinRoom = asyncHandler(async(req,res) => {
-    try{
-        const room_id : String = req.body.room_id
-        const user_id : String = req.body.user_id
-        if(room_id == '' || room_id == undefined){
-            res.status(500).json({
-                id : '0',
-                message : 'no room id'
-            })
-        }
-        const room = ROOM.findOne({
-            room_id : room_id
-        })
-        if(room == null){
-            res.status(400).json({
-                id : '0',
-                message : 'no room found for the given id'
-            })
-        }else{
-           const result : UpdateWriteOpResult = await ROOM.updateOne({ room_id : room_id },
-            { $addToSet : { joined_by : user_id }} );
-            console.log(result);
-            res.status(200).json({
-                id : '1',
-                message : 'user joined successfully'
-            })
-        }
     }catch(err){
 
     }
