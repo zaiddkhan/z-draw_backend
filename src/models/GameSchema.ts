@@ -1,17 +1,22 @@
 import { Schema,model } from 'mongoose';
 import { number } from 'zod';
 
+interface GuessWord {
+    word : string,
+    length : number,
+    indexes : [number]
+}
 
 interface Game{
     roomId : string,
     currentRound : number,
     totalRounds : number,
     points : Map<string,number>,
-    guessWord : string,
+    guessWord : GuessWord,
     players: string[],
     expiryTime : number,
     maxPlayers : number,
-    currentPaintr : string
+    currentPaintr : string,
 }
 
 
@@ -19,7 +24,7 @@ const gameSchema = new Schema<Game>({
    
     currentPaintr : {
         type : String,
-        required : true,
+        required : false,
         default : ''
     },
     roomId : {
@@ -40,7 +45,22 @@ const gameSchema = new Schema<Game>({
         required : true
     },
     guessWord : {
-        type : String,
+        type : new Schema({
+            word : {
+                type : String,
+                required : true
+            },
+            indexes : {
+              
+                type : [Number],
+                required : true,
+                
+            },
+            length : {
+                type : Number,
+                required : true
+            }
+        }),
         required : true
     },
     players : {
@@ -55,6 +75,7 @@ const gameSchema = new Schema<Game>({
         type : Number,
         required : true
     },
+
    
 })
 

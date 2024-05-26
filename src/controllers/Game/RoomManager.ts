@@ -4,19 +4,18 @@ import  { OutgoingGuessWord, findSimilarity } from "./helper.js";
 import { generateRandomWord } from "./helper.js";
 import { GAME } from "../../models/GameSchema.js";
 import { ROOM } from "../../models/RoomSchema.js";
+import { shortenHiddenIndices } from "./helper.js";
 
 interface User{
-    name : String,
     id : String,
     connection : WebSocket,
-    currentRound : number
 }
 
 
 
 interface Room {
+    roomId : String,
     users : User[],
-    word : OutgoingGuessWord
 }
 
 export class RoomManager{
@@ -33,7 +32,9 @@ export class RoomManager{
             return
         }
         const similarity = findSimilarity(guessedWord,currentWord)
-        const game = await GAME.findOne().sort({ currentRound: 1 }).exec();
+        const game = await GAME.findOne(
+           { 'roomId' : roomId }
+        ).sort({ currentRound: 1 }).exec();
 
         let minCurrentRound: number;
         if (game !== null) {
@@ -42,11 +43,7 @@ export class RoomManager{
         minCurrentRound = 1;
         }
 
-        for (let user of room.users) {
-            if (user.currentRound < minCurrentRound) {
-                minCurrentRound = user.currentRound;
-            }
-        }
+      
         if(similarity === 100){
             const maxCurrentRoundGame = await GAME.findOne().sort({ currentRound: -1 }).exec();
 
@@ -57,14 +54,7 @@ export class RoomManager{
                 maxCurrentRound = 1;
             }
     
-        
-            for(let i = 0;i < room.users.length ;i++ ){
-            
-                room.users[i] ={ 
-                    ...room.users[i],
-                    "currentRound" : maxCurrentRound+1
-                }
-            }
+    
             const game = await GAME.findOne({ 
                 "roomId" : roomId
             });
@@ -86,16 +76,13 @@ export class RoomManager{
                         isEnded : false
                     }
               }
+              this.rooms.get(roomId)?.users.forEach((user) => {
+                user.connection.send(JSON.stringify(correctGuessResponse))
+              })
+                      
 
-              
-            console.log(room.users.length)
-             room.users.forEach(({name,id,connection}) => {  
-                console.log("inside the for loop")
-                connection.send(JSON.stringify(correctGuessResponse))
-           })
-            
-
-        }else{
+        }
+        else{
        
 
 
@@ -104,12 +91,12 @@ export class RoomManager{
             payload : {
                 word : currentWord,
                 similarity : similarity,
-                currentRound : room.users[0].currentRound,
+                currentRound : minCurrentRound,
                 isEnded : false
             }
         }
-        room.users.forEach(({name,id,connection}) => {
-            connection.send(JSON.stringify(guessWordResponse))
+        this.rooms.get(roomId)?.users.forEach((user) => {
+            user.connection.send(JSON.stringify(guessWordResponse))
         })
     
     }
@@ -117,10 +104,59 @@ export class RoomManager{
     
     }
 
+
+    async unhideLetters(roomId : string){
+        const game = await GAME.findOne(
+           { 'roomId' : roomId}
+        )
+        if(game == null){
+        
+            return
+        }
+        const openIndexes = game.guessWord.indexes
+        const word = game.guessWord.word
+        const numberOfHiddenLetters = word.length - openIndexes.length
+        if(numberOfHiddenLetters == 0){
+            return
+        }
+        const indices = [];
+        for (let i = 0; i < word.length; i++) {
+            indices.push(i);
+        }
+        const remainingIndices = indices.filter( num =>
+           !openIndexes.includes(num)
+        )
+        const  newIndices = shortenHiddenIndices(remainingIndices,remainingIndices.length/2)
+        await newIndices.forEach((num) => {
+            game.guessWord.indexes.push(num)
+        })
+        await game.save()
+        this.rooms.get(roomId)?.users.forEach((user) => {
+            user.connection.send(
+                JSON.stringify( newIndices.concat(openIndexes).sort())
+            )
+        }
+        )
+       
+        
+    }
     
 
-    async addUser(name : string,userId : string,roomId : string,connection : WebSocket,totalChances : number){
+    async addUser(name : string,userId : string,roomId : string,connection : WebSocket){
 
+        if (!this.rooms.has(roomId)) {
+            this.rooms.set(roomId, { roomId, users: [
+                {
+                    id  : userId,
+                    connection : connection
+                }
+            ] });
+        }else{
+            if(this.rooms.get(roomId) !== null){
+
+               this.rooms.get(roomId)!!.users.push({ id: userId, connection: connection });
+            }
+        }
        
         const game  = await GAME.findOne({
             roomId : roomId
@@ -130,36 +166,43 @@ export class RoomManager{
             return
         }else{
 
-        
-            if(game === null){
-                return;
+            if(game.players.includes(userId)){
+                return
             }
 
-             game.players.push(userId)
+        
              game.points.set(userId ,0 )
+             game.players.push(userId)
+            
+            
            
+            await game.save()
+            console.log(game.players.length)
+             console.log(game.maxPlayers)
              if(game.players.length == game.maxPlayers){
                 game.currentPaintr = userId
-                connection.send(JSON.stringify({
-                    currentPlayer : userId,
+                this.rooms.get(roomId)?.users.forEach((user) => {
+                    user.connection.send(JSON.stringify({
+                        currentPlayer : userId,
+                        playerAdded : true
+                    })
+                )})
+             }else{
+             this.rooms.get(roomId)?.users.forEach((user) => {
+                user.connection.send(JSON.stringify({
+                    currentPlayer : '',
                     playerAdded : true
-                }))
-             }
-             await game.save()
-             
+                })
+            )})
+        }
+       
         
-             connection.send(JSON.stringify({
-                currentPlayer : '',
-                playerAdded : true
-            }))
+            
 
 
         }
             
-    
-        
-        
-        
+ 
         connection.on('close',(reasonCode,desc) => {
             //remove
         })
@@ -167,17 +210,17 @@ export class RoomManager{
     
     
 
-    broadcastCoordinates(userId : string,roomId : string,outgoingCoords : OutgoingMessage){
+ broadcastCoordinates(userId : string,roomId : string,outgoingCoords : OutgoingMessage){
         const room = this.rooms.get(roomId)
         if(room == null){
             return
         } 
-        room.users.forEach(({name,id,connection}) => {
-           if(id == userId){
+        room.users.forEach((user) => {
+           if(user.id == userId){
                return
            }
 
-        connection.send(JSON.stringify(outgoingCoords))
+        user.connection.send(JSON.stringify(outgoingCoords))
         })
 
     }

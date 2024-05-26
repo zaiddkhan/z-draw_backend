@@ -2,35 +2,40 @@ import { asyncHandler } from '../../helper.js';
 import { generateRandomNum } from '../../helper.js';
 import { roomDataSchema } from './Validation.js';
 import { ROOM } from '../../models/RoomSchema.js';
+import { GAME } from '../../models/GameSchema.js';
+import { generateRandomWord } from '../Game/helper.js';
 export const createRoom = (async (req, res, next) => {
     try {
         const data = req.body;
         await roomDataSchema.parse(data);
         const roomId = generateRandomNum();
         const expiryTime = Date.now() + 120 * 1000;
-        const room = {
-            room_id: roomId,
-            max_players: data.max_players,
-            start_time: Date.now(),
-            room_name: data.room_name,
-            host_id: data.host_id,
-            joined_by: [data.host_id],
-            expiry_time: expiryTime,
-            rounds: data.rounds
+        const randomGuessWord = generateRandomWord();
+        const gameObject = {
+            roomId: roomId,
+            points: {
+                [data.host_id]: 0
+            },
+            guessWord: randomGuessWord,
+            totalRounds: data.totalChances,
+            currentRound: 1,
+            players: [data.host_id],
+            expiryTime: expiryTime,
+            maxPlayers: data.maxPlayers,
         };
-        const result = await ROOM.create(room);
-        return res.status(200).json(room);
+        await GAME.create(gameObject);
+        return res.status(200).json(gameObject);
     }
     catch (err) {
         if (err instanceof Error) {
-            return res.status(500).json({
+            return res.status(400).json({
                 id: '0',
                 message: err.message
             });
         }
         else {
             // If it's not an Error, handle it or return a generic message
-            return res.status(500).json({
+            return res.status(400).json({
                 id: '0',
                 message: 'An unknown error occurred'
             });
@@ -83,37 +88,6 @@ export const getRoomStatus = asyncHandler(async (req, res, next) => {
             id: '1',
             message: 'success'
         });
-    }
-    catch (err) {
-    }
-});
-export const joinRoom = asyncHandler(async (req, res) => {
-    try {
-        const room_id = req.body.room_id;
-        const user_id = req.body.user_id;
-        if (room_id == '' || room_id == undefined) {
-            res.status(500).json({
-                id: '0',
-                message: 'no room id'
-            });
-        }
-        const room = ROOM.findOne({
-            room_id: room_id
-        });
-        if (room == null) {
-            res.status(400).json({
-                id: '0',
-                message: 'no room found for the given id'
-            });
-        }
-        else {
-            const result = await ROOM.updateOne({ room_id: room_id }, { $addToSet: { joined_by: user_id } });
-            console.log(result);
-            res.status(200).json({
-                id: '1',
-                message: 'user joined successfully'
-            });
-        }
     }
     catch (err) {
     }

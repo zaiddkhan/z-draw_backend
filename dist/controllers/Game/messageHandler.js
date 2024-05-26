@@ -5,7 +5,7 @@ const roomManager = new RoomManager();
 function messageHandler(ws, message) {
     if (message.type == SupportedMessage.JoinRoom) {
         const payload = message.payload;
-        roomManager.addUser(payload.name, payload.userId, payload.roomId, ws, payload.totalChances);
+        roomManager.addUser(payload.name, payload.userId, payload.roomId, ws);
     }
     else if (message.type == SupportedMessage.CoOrdPlot) {
         const payload = message.payload;
@@ -23,6 +23,10 @@ function messageHandler(ws, message) {
     else if (message.type == SupportedMessage.WordGuess) {
         const payload = message.payload;
         roomManager.guessWords(payload.userId, payload.roomId, payload.guessedWord, payload.currentWord);
+    }
+    else if (message.type == SupportedMessage.WordTweek) {
+        const payload = message.payload;
+        roomManager.unhideLetters(payload.roomId);
     }
 }
 export default messageHandler;

@@ -120,6 +120,13 @@ function getRandomBlankIndexes(s, numberOfBlanks) {
     }
     return Array.from(listOfIndexes);
 }
+function shortenHiddenIndices(indexes, count) {
+    for (let i = indexes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indexes[i], indexes[j]] = [indexes[j], indexes[i]]; // Swap elements
+    }
+    return indexes.slice(0, count);
+}
 function findSimilarity(a, b) {
     const matrix = [];
     // Initialize the matrix with default values
@@ -146,4 +153,4 @@ function findSimilarity(a, b) {
     const similarityPercentage = similarity * 100;
     return similarityPercentage;
 }
-export { findSimilarity, generateRandomWord };
+export { findSimilarity, generateRandomWord, shortenHiddenIndices };

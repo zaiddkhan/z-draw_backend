@@ -4,7 +4,11 @@ export var SupportedMessage;
     SupportedMessage["JoinRoom"] = "JOIN_ROOM";
     SupportedMessage["CoOrdPlot"] = "CO-ORD_PLOT";
     SupportedMessage["WordGuess"] = "WORD_GUESS";
+    SupportedMessage["WordTweek"] = "TWEEK_WORD";
 })(SupportedMessage || (SupportedMessage = {}));
+const WordTweek = z.object({
+    roomId: z.string()
+});
 export const GuessWordMessage = z.object({
     guessedWord: z.string(),
     currentWord: z.string(),
@@ -21,5 +25,4 @@ export const InitMessage = z.object({
     name: z.string(),
     userId: z.string(),
     roomId: z.string(),
-    totalChances: z.number()
 });

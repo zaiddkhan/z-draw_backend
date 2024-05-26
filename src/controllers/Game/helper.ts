@@ -139,6 +139,14 @@ function getRandomBlankIndexes(s : string,numberOfBlanks : number){
     return Array.from(listOfIndexes);
 }
 
+function shortenHiddenIndices(indexes : Array<number>,count : number) : Array<number>{
+    for (let i = indexes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indexes[i], indexes[j]] = [indexes[j], indexes[i]]; // Swap elements
+    }
+    return indexes.slice(0, count);
+
+}
 
 function findSimilarity(a: string, b: string): number {
     const matrix: number[][] = [];
@@ -178,6 +186,7 @@ function findSimilarity(a: string, b: string): number {
 
 export {
     findSimilarity,
-    generateRandomWord
+    generateRandomWord,
+    shortenHiddenIndices
 }
 

@@ -5,8 +5,10 @@ import { z} from 'zod';
 export enum SupportedMessage {
     JoinRoom =  "JOIN_ROOM",
     CoOrdPlot = "CO-ORD_PLOT",
-    WordGuess = "WORD_GUESS"
+    WordGuess = "WORD_GUESS",
+    WordTweek = "TWEEK_WORD"
 }
+
 
 export type IncomingMessage = {
     type: SupportedMessage.JoinRoom,
@@ -17,7 +19,15 @@ export type IncomingMessage = {
 } | {
     type : SupportedMessage.WordGuess,
     payload : GuessWordMessageType
+} | {
+    type : SupportedMessage.WordTweek,
+    payload : WordTweekType
 }
+
+ const WordTweek = z.object({
+    roomId : z.string()
+})
+type WordTweekType = z.infer<typeof WordTweek>
 
 export const GuessWordMessage = z.object({
     guessedWord : z.string(),
@@ -25,6 +35,8 @@ export const GuessWordMessage = z.object({
     userId : z.string(),
     roomId : z.string()
 })
+
+
 
 export type GuessWordMessageType = z.infer<typeof GuessWordMessage>
 
@@ -40,7 +52,6 @@ export const InitMessage = z.object({
     name: z.string(),
     userId: z.string(), 
     roomId: z.string(),
-    totalChances : z.number()
 })
     
 export type InitMessageType = z.infer<typeof InitMessage>;

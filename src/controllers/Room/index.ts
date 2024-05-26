@@ -6,6 +6,7 @@ import { ROOM } from '../../models/RoomSchema.js';
 import { UpdateWriteOpResult } from 'mongoose';
 import exp from 'constants';
 import { GAME } from '../../models/GameSchema.js';
+import { generateRandomWord } from '../Game/helper.js';
 
 
 
@@ -17,19 +18,19 @@ export const createRoom = (async(req : Request,res : Response,next :NextFunction
         const roomId = generateRandomNum();
         const expiryTime = Date.now() + 120*1000
 
-        const randomGuessWord = generateRandomNum()
+        const randomGuessWord = generateRandomWord()
 
         const gameObject = {
             roomId : roomId,
             points : {
                 [data.host_id] : 0
             },
-            guessWord : JSON.stringify(randomGuessWord),
+            guessWord : randomGuessWord,
             totalRounds : data.totalChances,
             currentRound : 1,
             players : [data.host_id],
             expiryTime : expiryTime,
-            maxPlayers : data.maxPlayers
+            maxPlayers : data.maxPlayers,
         }
         await GAME.create(gameObject)
         
@@ -40,13 +41,13 @@ export const createRoom = (async(req : Request,res : Response,next :NextFunction
 
     }catch(err ){
         if (err instanceof Error) {
-            return res.status(500).json({
+            return res.status(400).json({
                 id: '0',
                 message: err.message
             });
         } else {
             // If it's not an Error, handle it or return a generic message
-            return res.status(500).json({
+            return res.status(400).json({
                 id: '0',
                 message: 'An unknown error occurred'
             });
