@@ -63,6 +63,7 @@ export class RoomManager {
                     isEnded: false
                 }
             };
+            console.log(this.rooms.get(roomId)?.users);
             this.rooms.get(roomId)?.users.forEach((user) => {
                 user.connection.send(JSON.stringify(guessWordResponse));
             });
